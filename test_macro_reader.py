@@ -5,9 +5,9 @@ import pytest
 # It shows what office document did this, including the type and name, as well as the suspicious command that it may have ran
 # This function looks through the rulebook for commands to check if they are safe or not
 
-# The test creates fake files that are taken from real events ran on the machine
-# This shows if the function takes all input correctly.
-# However, some areas of the log have been taken out just to make it shorter.
+# To check the function, the test bellow were created.
+# fake_event creates a fake log taken from real data when a startup is made
+# However, some areas of the log have been taken out for brevity and simplicity, they however do not affect the script in any way.
 
 # Creating the file
 def fake_event(parent,image,cmd,document,timestamp='"2026-10-12 11:08:29.1929631Z"',record="0"):
@@ -151,4 +151,7 @@ def test_risk_score(parent, image, cmd, document,expected_risk,fake_log):
     result = prototype.macro_reader()
 
     assert result[0]['Risk Level'] == expected_risk
-# All Test Pass
+
+
+
+# All Test Passed

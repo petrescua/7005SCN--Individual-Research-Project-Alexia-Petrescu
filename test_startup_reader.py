@@ -126,3 +126,6 @@ def test_no_time_no_id(fake_log):
 
     assert prototype.startup_reader()[0]["Timestamp (UTC)"] == "unknown"
     assert prototype.startup_reader()[0]["Event ID"] == "unknown"   
+
+
+# All tests have passed

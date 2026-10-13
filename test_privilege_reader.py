@@ -4,8 +4,9 @@ import pytest
 # This function checks if the UAC controls have been altered from their normal state
 # It checks what the number is, and what the number has been changed to
 
-# The tests needs a fake file to parse through, which can be used for testing
-# However, some areas of the log have been taken out for simplicity.
+# To check the function, the test bellow were created.
+# fake_event creates a fake log taken from real data when a startup is made
+# However, some areas of the log have been taken out for brevity and simplicity, they however do not affect the script in any way.
 
 def fake_event(image, target, details, time, record=0):
     return f'''Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
@@ -155,3 +156,5 @@ def test_no_time(fake_log):
                                 record=""))
     assert prototype.pr_reader()[0]["Timestamp (UTC)"]  == "unknown"
     assert prototype.pr_reader()[0]["Event ID"] == "unknown"
+
+# All tests have passed
