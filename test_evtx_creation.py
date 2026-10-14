@@ -4,13 +4,12 @@ import pytest
 
 log_file = "test.evtx"
 
-# Testing if the evtx file creates every time of file correctly
-# Doing so without running the command on Windows 
+# Testing if the function creates the evtx file correclty
+# Testing without running a command in Windows, therefore monkeypatch required 
 @pytest.fixture
 def captured(monkeypatch):
-    # split has an an error section, for error checking
     cmd_dict = {"error": None}
-
+    
     def test_run(command, **kwargs):
         cmd_dict["command"] = command
         if cmd_dict["error"]:
@@ -36,7 +35,7 @@ def test_correct_structure(captured,log_channel,event):
     assert captured["command"][4].startswith("/q:*[System[")
     assert f"EventID={event}" in captured["command"][4]
 
-# Then, checking if the hours into milliseconds handles different hour changes
+# Test checks if the hours into milliseconds handles different hour changes
 def test_miliseconds(captured):
     evtx_file(sys_log_channel,log_file,hours=1,eventID=1)
     assert "<= 3600000" in captured["command"][4]
@@ -44,7 +43,7 @@ def test_miliseconds(captured):
     evtx_file(sys_log_channel,log_file,hours=24,eventID=1)
     assert "<= 86400000" in captured["command"][4]
 
-# Checks what happens if file not found occurs, including what sys exit it produces and what it tells the user
+# Test checks if  file not found occurs, including what sys exit it produces and what it tells the user
 def test_file_not_found(captured,capsys):
     captured["error"] = FileNotFoundError()
 
@@ -64,4 +63,4 @@ def test_exceptions(captured,capsys):
     assert info.value.code == 1
     assert "Unexpected error:" in capsys.readouterr().out
 
-# All tests passed
+# All Test Passed

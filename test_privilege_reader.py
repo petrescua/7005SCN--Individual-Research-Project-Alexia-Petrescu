@@ -5,9 +5,10 @@ import pytest
 # It checks what the number is, and what the number has been changed to
 
 # To check the function, the test bellow were created.
-# fake_event creates a fake log taken from real data when a startup is made
+# Fake_event creates a fake log taken from real data when a startup is made
 # However, some areas of the log have been taken out for brevity and simplicity, they however do not affect the script in any way.
 
+# Creating the fake event
 def fake_event(image, target, details, time, record=0):
     return f'''Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
 - <System>
@@ -42,6 +43,7 @@ def fake_event(image, target, details, time, record=0):
 @pytest.fixture
 def fake_log(monkeypatch):
     # XML strin goes through this list
+
     events = []
     # runs fake xml instead of real one
     class FakeRecord:
@@ -65,9 +67,7 @@ def fake_log(monkeypatch):
     monkeypatch.setattr(prototype, "evtx_file", lambda *args, **kwargs:None)
     return events
 
-# user = r'DISWIN\vboxuser'
-
-# Firstly, checking all the variables gain the correct values by testing a known trigger
+# Firstly, testing the results show up correctly by testing a known trigger
 def test_variable(fake_log):
     fake_log.append(fake_event(image=r'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe',
                                target=r'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System\PromptOnSecureDesktop',
@@ -120,17 +120,17 @@ def test_risk_score(fake_log,image, target, details, time, expected_risk):
 
     assert result[0]["Risk Level"] == expected_risk
 
-# Test checks for non suspicious, non changing value logs
+# Test checks for non suspicious, non value changing events
 def test_non_suspicious(fake_log):
     fake_log.append(fake_event("",r'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System\Prompt',"",""))
     assert prototype.pr_reader() == []
 
-# Test checks for empty log
+# Test checks for empty event log
 def test_empty_log(fake_log):
     fake_log.append(fake_event("","","",""))
     assert prototype.pr_reader() == []
 
-# Test checks for multliple logs that only the suspicious ones get allocated
+# Test checks for multliple events that only the suspicious ones get allocated
 def test_multiple(fake_log):
     fake_log.append(fake_event(r'C:\Windows\System32\wscript.exe',
                             r'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System\EnableLUA',
@@ -157,4 +157,4 @@ def test_no_time(fake_log):
     assert prototype.pr_reader()[0]["Timestamp (UTC)"]  == "unknown"
     assert prototype.pr_reader()[0]["Event ID"] == "unknown"
 
-# All tests have passed
+# All Test Passed

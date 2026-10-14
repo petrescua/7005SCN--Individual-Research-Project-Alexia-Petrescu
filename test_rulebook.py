@@ -17,20 +17,34 @@ def test_each_section(text,expected_label):
     labels, _ = check_rulebook(text)
     assert expected_label in labels
 
-# Second, testing edge cases 
+# Test checks that non suspicious commands do not get assigned labels or score
 def test_score_zero():
     label, score = check_rulebook("C:\\Program Files\\Onedrive\\OneDrive.exe /background")
     assert label == [] 
     assert score == 0
 
+# Test checks function does not assign label or score to no command
+def test_check_empty():
+    label, score = check_rulebook("")
+    assert label == [] 
+    assert score == 0
+
+# Test checks the functions adds up all the suspisious argumnets in a command  
 def test_multiple_score_add():
     label, score = check_rulebook("powershell.exe -enc AHSGHAs; iex $")
     assert len(label) == 2
     assert score == 7
 
+# Test checks the function runs regardless of case
 def test_case():
     label, score = check_rulebook("MIMIKATZ # PRIVILAGE::DEBUG") 
     assert "Mimikatz installed on system" in label
     assert score == 4
 
-# All tests come back passed.
+def test_case_two():
+    label, score = check_rulebook("MImiKATZ # PRIvLagE::DEBUG") 
+    assert "Mimikatz installed on system" in label
+    assert score == 4
+
+
+# All Test Passed

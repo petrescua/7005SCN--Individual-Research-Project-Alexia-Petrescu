@@ -16,6 +16,7 @@ def test_lnk_path():
                           ("C:\\Program Files\\Microsoft OneDrive\\OneDrive.App.exe"),
                           ("C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"),
                           ("Not_A_Path_Test"),
+                          (""),
                          ])
 def test_non_shortcut_path(lnk):
     assert shortcut_path(lnk) == None
@@ -27,4 +28,4 @@ def test_non_existant_shortcut():
     lnk = r"C:\Users\vboxuser\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\short_test.lnk"
     assert shortcut_path(lnk) == None
 
-# All tests were passed
+# All Test Passed

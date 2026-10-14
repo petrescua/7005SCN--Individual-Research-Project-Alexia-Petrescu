@@ -13,4 +13,4 @@ import pytest
 def test_hex(hex, decimal):
     assert hex_int(hex) == decimal
 
-# All tests were passed
+# All tests passed

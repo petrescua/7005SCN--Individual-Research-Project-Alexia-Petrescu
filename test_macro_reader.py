@@ -6,10 +6,10 @@ import pytest
 # This function looks through the rulebook for commands to check if they are safe or not
 
 # To check the function, the test bellow were created.
-# fake_event creates a fake log taken from real data when a startup is made
+# Fake_event creates a fake log taken from real data when a startup is made
 # However, some areas of the log have been taken out for brevity and simplicity, they however do not affect the script in any way.
 
-# Creating the file
+# Creating the fake event
 def fake_event(parent,image,cmd,document,timestamp='"2026-10-12 11:08:29.1929631Z"',record="0"):
     return f'''<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
   <System>
@@ -80,7 +80,7 @@ def fake_log(monkeypatch):
     monkeypatch.setattr(prototype, "evtx_file", lambda *args, **kwargs:None)
     return events
 
-
+# First, checking the all the variables gain the correct values by testing a known trigger
 def test_macro(fake_log):
     fake_log.append(fake_event(parent=r"C:\Program Files\Microsoft Office\root\Office16\WINWORD.EXE",
                                image=r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe",
@@ -97,43 +97,7 @@ def test_macro(fake_log):
     assert result[0]["Command"] == "powershell.exe -w hidden -enc & Base64EncodedTestCommand()"
     assert result[0]["From Document"] == "Macro_setup.docx"
 
-# Test checks if nothing is shown, the result will not be shown
-def test_non_suspicious(fake_log):
-    fake_log.append(fake_event("","","",""))
-    assert prototype.macro_reader() == []
-
-# Test checks if unknown areas are shown as unknown
-def test_unknown(fake_log):
-    fake_log.append(fake_event(parent=r"C:\Program Files\Microsoft Office\root\Office16\WINWORD.EXE",
-                               image=r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe",
-                               cmd="",
-                               document="",
-                               record="",
-                               timestamp=""))
-    result = prototype.macro_reader()
-    assert result[0]["Event ID"] == "Unknown"
-    assert result[0]["Timestamp (UTC)"] == "Unknown"
-    assert result[0]["From Document"] == "Unknown"
-
-# Test checks if only suspicious logs are getting attached to the result, even when there are multiple shown.
-def tets_only_suspicious(fake_log):
-    fake_log.append(fake_event(parent=r"C:\Program Files\Microsoft Office\root\Office16\WINWORD.EXE",
-                                       image=r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe",
-                                       cmd=r"powershell.exe -w hidden -enc & Base64EncodedTestCommand()",
-                                       document=r'"C:\Program Files\Microsoft Office\Root\Office16\WINWORD.EXE" /n "C:\Users\vboxuser\Desktop\office doc\Macro_setup.docx" /o ""',
-                                       record="1"
-                                       ))
-    fake_log.append(fake_event(parent=r"C:\Program Files\Microsoft Office\root\Office16\WINWORD.EXE",
-                                   image=r"C:\Program Files\Microsoft Office\root\Office16\ai.exe",
-                                   cmd="No",
-                                   document="NO",
-                                   record= "2"
-                                   ))
-   
-    result = prototype.macro_reader()
-    assert len(result) == 1
-    assert result[0]["Event ID"] == "2"
-
+# Test checks multiple events, and test if the expected risk is the risk that is shown in the results section
 @pytest.mark.parametrize("parent, image, cmd, document,expected_risk",
                          [(r"C:\Program Files\Microsoft Office\root\Office16\WINWORD.EXE",
                            r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe",
@@ -152,6 +116,42 @@ def test_risk_score(parent, image, cmd, document,expected_risk,fake_log):
 
     assert result[0]['Risk Level'] == expected_risk
 
+# Test checks if only suspicious events are getting attached to the result, even when there are multiple shown.
+def tets_only_suspicious(fake_log):
+    fake_log.append(fake_event(parent=r"C:\Program Files\Microsoft Office\root\Office16\WINWORD.EXE",
+                                       image=r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe",
+                                       cmd=r"powershell.exe -w hidden -enc & Base64EncodedTestCommand()",
+                                       document=r'"C:\Program Files\Microsoft Office\Root\Office16\WINWORD.EXE" /n "C:\Users\vboxuser\Desktop\office doc\Macro_setup.docx" /o ""',
+                                       record="1"
+                                       ))
+    fake_log.append(fake_event(parent=r"C:\Program Files\Microsoft Office\root\Office16\WINWORD.EXE",
+                                   image=r"C:\Program Files\Microsoft Office\root\Office16\ai.exe",
+                                   cmd="n/a",
+                                   document="n/a",
+                                   record= "2"
+                                   ))
+   
+    result = prototype.macro_reader()
+    assert len(result) == 1
+    assert result[0]["Event ID"] == "2"
 
+
+# Test checks empty event, the result will not be shown
+def test_non_suspicious(fake_log):
+    fake_log.append(fake_event("","","",""))
+    assert prototype.macro_reader() == []
+
+# Test checks if unknown areas are shown as unknown
+def test_unknown(fake_log):
+    fake_log.append(fake_event(parent=r"C:\Program Files\Microsoft Office\root\Office16\WINWORD.EXE",
+                               image=r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe",
+                               cmd="",
+                               document="",
+                               record="",
+                               timestamp=""))
+    result = prototype.macro_reader()
+    assert result[0]["Event ID"] == "Unknown"
+    assert result[0]["Timestamp (UTC)"] == "Unknown"
+    assert result[0]["From Document"] == "Unknown"
 
 # All Test Passed

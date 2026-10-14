@@ -18,3 +18,5 @@ def test_loc(paths,expected_location):
 def test_non_path():
     path = "Not_A_Path_Test"
     assert location(path) == "unrecognised"
+
+# All Test Passed
