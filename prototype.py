@@ -1,4 +1,4 @@
-import ctypes
+import ctypes # To ensure admin
 import csv # creating csv file for RISK
 from Evtx.Evtx import Evtx # allows us to read the evtx files to check them
 import os # used to check if the output file already exists
@@ -6,12 +6,14 @@ import re # regular expression for pattern matching
 import subprocess # used to run commands in the terminal so user does not have to run them manually
 import sys # used to exit the program if there is an error
 from windows_toasts import Toast, WindowsToaster # For notification purposes
-import win32com.client
-# Event log path
+import win32com.client # Checking path for shortcut
+
+# Event log path in Event Viewer
 sys_log_channel = "Microsoft-Windows-Sysmon/Operational"
 ps_log_channel = "Microsoft-Windows-PowerShell/Operational"
 
-# all the files made
+# All the files made:
+
 # Privillage change files and name
 pr_log_file = "privilege.evtx"  
 pr_output_file =  "privilege_report.csv"
@@ -32,10 +34,10 @@ start_log_file = "start_up.evtx"
 start_output_file =  "start_up_report.csv"
 startup_name = "Start-up Folder"
 
-# Milliseconds 
+# Milliseconds converter
 ms_hour = 60 * 60 * 1000
 
-# Field types
+# Fieldnames for all the csv files
 ma_fieldname = ["Event ID", "Timestamp (UTC)", "Category" , "Risk Level", "Command"]
 macro_fieldname = ["Event ID", "Timestamp (UTC)", "Category" , "Risk Level", "Command","Command Risk", "From Document"]
 pr_fieldname = ["Event ID", "Timestamp (UTC)", "Category" , "Risk Level", "Expected Value", "Changed to", "Changed by"]
@@ -58,7 +60,7 @@ UAC_rules = [
 # Macros Lists and Dictonary
 office_app = ["WINWORD.EXE", "EXCEL.EXE", "POWERPNT.EXE"]
 
-# potential applications can can be used for suspicious activity
+# Potential applications can can be used for suspicious activity
 risk_image = [
     "powershell.exe", "cmd.exe", "sc.exe", "misexec.exe",
     "wmic.exe", "wscript.exe", "rundll32.exe", "reg.exe",
@@ -66,6 +68,7 @@ risk_image = [
     "mshta.exe", "cscript.exe",  "certutil.exe" 
     ]
 
+# Applications that office documents may open that are safe
 risk_low = ["ai.exe", "aimgr.exe","splwow64.exe"]
 
 # Pattern Dictonary also used for start-up
@@ -120,10 +123,10 @@ known_baseline = [
 # Paths where safe apps are, as they require admin to be installed there
 legitimate_path = [r"\Program Files", r"Program Files (x86)", r"Windows\System32"]
 
-# paths where mallicious applications could be stored in
+# Paths where mallicious applications could be stored in
 suspicious_path = [r"\Temp", r"\AppData\Local\Temp", r"\Downloads", r"\Desktop"]
 
-# Runs code as admin for sysmon
+# Runs code as admin for Sysmon
 def ensure_admin():
     try:
         is_admin = ctypes.windll.shell32.IsUserAnAdmin()
@@ -153,6 +156,7 @@ def location(path):
             return "safe"
     return "unrecognised"
 
+# Checks if a file has been signed for and returns what the status of the signature is
 def check_signature(path):
     text = (f"(Get-AuthenticodeSignature -LiteralPath '{path}').Status")
     command = [
@@ -174,8 +178,7 @@ def check_signature(path):
 
 # Checks where a shortcut links to
 def shortcut_path(path):
-    # This is a live test, therefore the file may have been deleted before the test was done
-    # this returns none.
+    # This is a live test, therefore the file may have been deleted before the test was done, if so, returns none
     if os.path.exists(path) == False:
         return None
     try:    
@@ -185,7 +188,7 @@ def shortcut_path(path):
     except Exception:
         return None
 
-# make the hex into a number
+# Hex into a base10
 def hex_int(detail):
     # matches the hex
     match = re.search(r'0x([0-9A-Fa-f]+)', detail)
@@ -236,7 +239,7 @@ def macro_reader():
             macro = record.xml()
 
             parent = re.search(r'<Data Name="ParentImage">(.*?)</Data>', macro)
-            document = re.search(r'<Data Name="ParentCommandLine">(.*?) /n "(.*?)"(.*?)</Data>', macro)          
+            document = re.search(r'<Data Name="ParentCommandLine">"([^"]+)" /n "([^"<]+)"?(.*?)/Data>', macro)       
             image = re.search(r'<Data Name="Image">(.*?)</Data>', macro)
             cmdline = re.search(r'<Data Name="CommandLine">(.*?)</Data>', macro)
             event = re.search(r'<EventRecordID>(.*?)</EventRecordID>', macro)
@@ -247,7 +250,7 @@ def macro_reader():
 
 
             parent_name = os.path.basename(parent.group(1))
-            image_name = os.path.basename(image.group(1))
+            image_name = os.path.basename(image.group(1)) 
             document = os.path.basename(document.group(2)) if document else "Unknown"
 
             office = parent_name.upper() in office_app 
@@ -290,7 +293,7 @@ def macro_reader():
                 "Category": reason,
                 "Risk Level" : risk,
                 "Command" : cmd,
-                "Command Risk":" ; ".join(label),
+                "Command Risk":" ; ".join(label) if len(label) == 1 else label,
                 "From Document" : document,
             }
 
@@ -344,7 +347,7 @@ def pattern_reader():
 
      return all_results
 
-# Checks for any privilege changes
+# Checks for any UAC changes
 def pr_reader():
     evtx_file(sys_log_channel,pr_log_file,eventID=13)
     all_results = []
@@ -505,7 +508,7 @@ def startup_reader():
   
     return all_results
 
-# Checks if the event ID already there, so not writing twice
+# Checks if the event ID already in csv file, to not write it twice
 def check_log_id(output_file):
     already_logged = set()
 
@@ -539,6 +542,7 @@ def new_results(result,log,output_file,field_name):
 
     return new_result
 
+# Main
 def main():
     print("Checking for new suspicious activity, this may take a while.")
     #Malicious Macro Spawning output
@@ -561,7 +565,7 @@ def main():
     start_log = check_log_id(start_output_file)
     new_start = new_results(start_result,start_log,start_output_file,start_filedname)
 
-
+    # Dictionary to form the notification pop-up.
     alerts = [
             {"New": len(new_macro),
              "Name":  macro_name,
