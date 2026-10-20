@@ -117,6 +117,7 @@ known_baseline = [
     r'Startup\~ew shortcut.tmp',
     r'\Startup\New shortcut.lnk',
     r'\Startup\New shortcut.lnk~RFf141b8.TMP'
+    r'\Startup\desktop.ini'
 
 ]
 
