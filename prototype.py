@@ -43,7 +43,7 @@ macro_fieldname = ["Event ID", "Timestamp (UTC)", "Category" , "Risk Level", "Co
 pr_fieldname = ["Event ID", "Timestamp (UTC)", "Category" , "Risk Level", "Expected Value", "Changed to", "Changed by"]
 start_filedname = ["Event ID", "Timestamp (UTC)", "Category","Path", "Risk Level", "Target", "Type", "Reason", "Signature Status"]
 
-# Privilage Lists and Dictonary
+# Privilage Lists and Dictonary, these were changed in attacks such as the one lead by Medusa Locker
 UAC_rules = [
     {"name": "ConsentPromptBehaviorAdmin",
      "base_no": 5},
@@ -78,9 +78,9 @@ RULEBOOK = [
      "score": 4},
     # One way attckers can encode is using -enc  
     {"label": "Command was Encoded",
-     "pattern": r"-encryption",
+     "pattern": r"-encryption|-encryption_(path|percent|file)",
      "score": 4},
-    # Encryptions like the one before
+    # Encryptions arguments seen in Akira commands
     {"label": "Command downloaded Content from the web",
      "pattern": r"Invoke-WebRequest|wget|curl|Download(String|File|Data)",
      "score": 3},
@@ -104,7 +104,7 @@ RULEBOOK = [
     {"label": "Shadow Copies Deleted",
      "pattern": r"shadow(copy)|delete\s+shadows",
      "score": 4},
-    # shadowcopy in command
+    # shadowcopy in command as shown in Akira, Avos Locker and Black Basta Commands
     ]
 
 # Paths for where Run applications could be
